@@ -1,0 +1,53 @@
+Allowing or Denying an arbitary port/protocol
+
+Allow or disable TCP traffic on port 12345
+-sudo firewall-cmd --zone=public --add-port=12345/tcp --permanent
+-sudo firewall-cmd --zone=public --remove-port=12345/tcp --permanent
+
+Port Forwarding
+
+Forwards traffic from port 80 to port 12345 on the same server
+-sudo firewall-cmd --zone="public" --add-forward-port=port=80:proto=tcp:toport=1234
+
+1.Activate masquerade in the desired zone
+-sudo firewall-cmd --zone=public --add-masquerade
+2.Add the forward rule
+-sudo firewall-cmd --zone="public" --add-forward-port=port=80:proto=tcp:toport=8080:toaddr=198.51.100.0
+3.To remove the rules
+-sudo firewall-cmd --zone=public --remove-masquerade
+
+
+Constructing a Ruleset with Firewalld
+1.Assign the dmz zone as the default zone to eth0
+sudo firewall-cmd --set-default-zone=dmz
+sudo firewall-cmd --zone=dmz --add-interface=eth0
+2.Add permanent service rules for HTTP and HTTPS to the dmz zone
+sudo firewall-cmd --zone=dmz --add-service=http --permanent
+sudo firewall-cmd --zone=dmz --add-service=https --permanent
+3.Reload firewalld
+sudo firewall-cmd --reload
+
+
+Advanced Configuration
+Rich Rules and Direct Interface allow you to add fully custom firewall rules to any zone for any port, protocol, address and action.
+
+Rich Rules
+ Use --add-rich-rule, --list-rich-rules and --remove-rich-rule with firewall-cmd command to manage them
+Allow all IPv4 traffic from host 192.0.2.0
+-sudo firewall-cmd --zone=public --add-rich-rule 'rule family="ipv4" source address=192.0.2.0 accept'
+Deny IPv4 traffic over TCP from host 192.0.2.0 to port 22
+-sudo firewall-cmd --zone=public --add-rich-rule 'rule family="ipv4" source address="192.0.2.0" port port=22 protocol=tcp reject'
+Allow IPv4 traffic over TCP from host 192.0.2.0 to port 80, and forward it locally to port 6532.
+-sudo firewall-cmd --zone=public --add-rich-rule 'rule family=ipv4 source address=192.0.2.0 forward-port port=80 protocol=tcp to-port=6532'
+Forward all IPv4 traffic on port 80 to port 8080 on host 198.51.100.0
+-sudo firewall-cmd --zone=public --add-rich-rule 'rule family=ipv4 forward-port port=80 protocol=tcp to-port=8080 to-addr=198.51.100.0'
+To list your current Rich Rules in the public zone
+-sudo firewall-cmd --zone=public --list-rich-rules
+
+
+iptables Direct Interface
+ Direct Interface rules are not persistent unless the --permanent is used.
+custom chains or rules added to firewalld
+-firewall-cmd --direct --get-all-chains
+firewall-cmd --direct --get-all-rules
+
